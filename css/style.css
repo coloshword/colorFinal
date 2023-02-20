@@ -1,0 +1,89 @@
+html, body {
+    height: 100%;
+}
+
+html {
+    display: table;
+    margin: auto;
+}
+
+body {
+    display: table-cell;
+    vertical-align: middle;
+}
+
+.colorPicker {
+    border-radius: 10px;
+    border: solid 3px black;
+    background-color: #EEEFF0;
+    width: 48rem;
+    height: 34.5rem;
+}
+
+/* header*/
+.header {
+    width: 48rem;
+    height: 3.5rem;
+    background-color: #5A648D;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.headerText {
+    font-family: 'Lato', sans-serif;
+    font-weight: bold;
+    padding-left: 3em;
+    color: white;
+}
+
+.selection {
+    height: 4rem;
+    width: 48rem;
+}
+
+.parameters {
+    display: flex;
+    flex-direction: row;
+    padding-left: 3rem;
+    gap: 2rem;
+}
+
+.display {
+    background-color: white;
+    border: solid 2px #CECECE;
+    height: 24rem;
+    width:26rem;
+    border-radius: 0.5rem;
+    text-align: center;
+}
+
+.colorWheel {
+    margin: auto;
+
+}
+.gradient {
+    width: 100px; height: 100px;
+    border-radius: 50%;
+  }
+
+
+.turtleResultDisplay {
+    width: 14.4rem;
+    height: 24rem;
+    border-radius: 0.5rem;
+}
+
+  /* dragging classes */
+.static {
+
+}
+.draggable {
+  cursor: move;
+}
+
+/* removes the cursor while dragging the svg */
+.dragging {
+  cursor: none;
+}
