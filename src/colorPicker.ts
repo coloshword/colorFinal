@@ -64,7 +64,7 @@ var mappedColors: {[key:string]: number} = {
 
 var numColors :number  = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
 let degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
-
+let degreesPerSection:number;
 /// From colors.coffee
 
 var colorTimesTen:number;
@@ -146,7 +146,7 @@ function loadColorWheel(): void {
 
 function updateOuterWheel(increment:number): void {
   let numSections: number =  (10/increment) + 1;
-  let degreesPerSection: number = 360/numSections;
+  degreesPerSection = 360/numSections;
   let cssFormat: string = `background-image: conic-gradient(`;
   let degreeTracker = 0;
   let startingGradient:number  = mappedColors[currentColor] - 5; // start at black gradient 
@@ -208,6 +208,10 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
       let hex = rgbToHex(color[0], color[1], color[2]);
       if(selected.id == "innerSlider") {
         selected.setAttributeNS(null, "fill", hex);
+        updateOuterWheel(1);
+      }
+      else {
+        // we moved the outer slider 
       }
       // update color of background or turtle
       let updateElement: SVGSVGElement;
@@ -219,7 +223,6 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
       }
       updateElement.setAttributeNS(null, "fill", hex);
       currentColor = colorsString[index];
-      updateOuterWheel(1);
     }
     
     function getMousePosition(evt) {
@@ -242,10 +245,11 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
       if (selectedElement) {
         evt.preventDefault();
         let coordinates = getMousePosition(evt);
-  
+        console.log(coordinates);
         let x = coordinates.x;
         let y = coordinates.y;
         let lastValidArr: number[];
+        let indexHelper: number;
         if(selectedElement != null && selectedElement.classList.contains('confined')) { // dragable item has to be confined 
           let distFromCenter = distance(x, y, colorWheelCenter[0], colorWheelCenter[1]);
           // get confinement
@@ -255,10 +259,12 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
             case "innerSlider":
               confinement = distFromCenter > 40 || distFromCenter < 20;
               lastValidArr = lastValidLocInner;
+              indexHelper = degreesPerSV;
               break;
             case "outerSlider":
               confinement = distFromCenter > 48 || distFromCenter < 44;
               lastValidArr = lastValidLocOuter;
+              indexHelper = degreesPerSection;
               break;
           }
           if(confinement) {
@@ -271,7 +277,7 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
         selectedElement.setAttributeNS(null, "cx", "" + x);
         selectedElement.setAttributeNS(null, "cy", "" + y);
         // get angle "B" is the center point 
-        let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / degreesPerSV);
+        let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / indexHelper);
         updateColor(colorIndex, selectedElement); // updates the color of the "scrollersvg"
         lastValidArr[0] = x;
         lastValidArr[1] = y;

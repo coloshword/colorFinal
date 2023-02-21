@@ -58,6 +58,7 @@ var mappedColors = {
 };
 var numColors = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
 let degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
+let degreesPerSection;
 /// From colors.coffee
 var colorTimesTen;
 var baseIndex;
@@ -129,7 +130,7 @@ function loadColorWheel() {
 }
 function updateOuterWheel(increment) {
     let numSections = (10 / increment) + 1;
-    let degreesPerSection = 360 / numSections;
+    degreesPerSection = 360 / numSections;
     let cssFormat = `background-image: conic-gradient(`;
     let degreeTracker = 0;
     let startingGradient = mappedColors[currentColor] - 5; // start at black gradient 
@@ -183,6 +184,10 @@ function makeDraggable(evt) {
         let hex = rgbToHex(color[0], color[1], color[2]);
         if (selected.id == "innerSlider") {
             selected.setAttributeNS(null, "fill", hex);
+            updateOuterWheel(1);
+        }
+        else {
+            // we moved the outer slider 
         }
         // update color of background or turtle
         let updateElement;
@@ -194,7 +199,6 @@ function makeDraggable(evt) {
         }
         updateElement.setAttributeNS(null, "fill", hex);
         currentColor = colorsString[index];
-        updateOuterWheel(1);
     }
     function getMousePosition(evt) {
         var CTM = svg.getScreenCTM();
@@ -214,9 +218,11 @@ function makeDraggable(evt) {
         if (selectedElement) {
             evt.preventDefault();
             let coordinates = getMousePosition(evt);
+            console.log(coordinates);
             let x = coordinates.x;
             let y = coordinates.y;
             let lastValidArr;
+            let indexHelper;
             if (selectedElement != null && selectedElement.classList.contains('confined')) { // dragable item has to be confined 
                 let distFromCenter = distance(x, y, colorWheelCenter[0], colorWheelCenter[1]);
                 // get confinement
@@ -226,10 +232,12 @@ function makeDraggable(evt) {
                     case "innerSlider":
                         confinement = distFromCenter > 40 || distFromCenter < 20;
                         lastValidArr = lastValidLocInner;
+                        indexHelper = degreesPerSV;
                         break;
                     case "outerSlider":
                         confinement = distFromCenter > 48 || distFromCenter < 44;
                         lastValidArr = lastValidLocOuter;
+                        indexHelper = degreesPerSection;
                         break;
                 }
                 if (confinement) {
@@ -240,7 +248,7 @@ function makeDraggable(evt) {
             selectedElement.setAttributeNS(null, "cx", "" + x);
             selectedElement.setAttributeNS(null, "cy", "" + y);
             // get angle "B" is the center point 
-            let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / degreesPerSV);
+            let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / indexHelper);
             updateColor(colorIndex, selectedElement); // updates the color of the "scrollersvg"
             lastValidArr[0] = x;
             lastValidArr[1] = y;
