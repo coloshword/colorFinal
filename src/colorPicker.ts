@@ -4,7 +4,7 @@ function $(v: string) {
 }
 
 // Globals
-var currentColor:number[] = [50, 92, 168] // the color picker opens with blue as default
+var currentColor:string = 'cyan'; // the color picker opens with blue as default
 var setTurtleColor:boolean = false; // by default we are changing the color of the turtle first
 
 // set up color model
@@ -43,8 +43,64 @@ var colorsString:string[] = ['gray',
 'magenta',
 'pink']
 
-var numColors = colorsString.length; // number of "primary colors" in the color wheel
+// maps netlogo base color (strings) to netlogo color as number
+var mappedColors: {[key:string]: number} = {
+  'gray':5,
+  'red':15,
+  'orange':25,
+  'brown':35,
+  'yellow':45,
+  'green':55,
+  'lime':65,
+  'turqoise':75,
+  'cyan':85,
+  'sky':95,
+  'blue':105,
+  'violet':115,
+  'magenta':125,
+  'pink': 135,
+}
+
+
+var numColors :number  = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
 let degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
+
+/// From colors.coffee
+
+var colorTimesTen:number;
+var baseIndex:number;
+var r, g, b :number;
+var step:number;
+
+
+function cachedNetlogoColors() {
+  var k, results;
+  results = [];
+  for (colorTimesTen = k = 0; k <= 1400; colorTimesTen = ++k) {
+    baseIndex = Math.floor(colorTimesTen / 100);
+    [r, g, b] = netlogoBaseColors[baseIndex];
+    step = (colorTimesTen % 100 - 50) / 50.48 + 0.012;
+    if (step < 0) {
+      r += Math.floor(r * step);
+      g += Math.floor(g * step);
+      b += Math.floor(b * step);
+    } else {
+      r += Math.floor((0xFF - r) * step);
+      g += Math.floor((0xFF - g) * step);
+      b += Math.floor((0xFF - b) * step);
+    }
+    results.push([r, g, b]);
+  }
+  return results;
+}
+
+
+let cached: number[][] = cachedNetlogoColors();
+
+function netlogoColorToHex(netlogoColor:number): string {
+  let temp: number[] =  cached[Math.floor(netlogoColor * 10)];
+  return rgbToHex(temp[0], temp[1], temp[2]);
+};
 
 // COLOR WHEEL FUNCTIONS 
 
@@ -88,6 +144,20 @@ function loadColorWheel(): void {
     colorWheel!.style.cssText += cssFormat;
 }
 
+function updateOuterWheel(increment:number): void {
+  let numSections: number =  (10/increment) + 1;
+  let degreesPerSection: number = 360/numSections;
+  let cssFormat: string = `background-image: conic-gradient(`;
+  let degreeTracker = 0;
+  let startingGradient:number  = mappedColors[currentColor] - 5; // start at black gradient 
+  for(let i:number = 0; i<numSections - 1;i++) {
+    cssFormat += netlogoColorToHex(startingGradient + i) + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
+    degreeTracker += degreesPerSection;
+  }
+  cssFormat += netlogoColorToHex(startingGradient + numSections - 1) + ` ${degreeTracker}deg 0deg`;
+  let outerWheel = $("#outerWheel").style.cssText += cssFormat;
+}
+
 
 // Seting up dragging events
 
@@ -129,6 +199,7 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
     svg.addEventListener('mouseleave', endDrag);
   
     // dragging helpers
+    // updates the color wheel -- every time you update the current color, we need to update the outer color wheel.
     
     //updates the colors of the "scroller" as well as the turtle and background based on the index as compared to the array -- netlogoBaseColors
     function updateColor(index: number, selected: SVGSVGElement) {  
@@ -144,6 +215,8 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
         updateElement = $("#background") as unknown as SVGSVGElement;
       }
       updateElement.setAttributeNS(null, "fill", hex);
+      currentColor = colorsString[index];
+      updateOuterWheel(1);
     }
     
     function getMousePosition(evt) {
@@ -200,3 +273,4 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
 
 // call functions
 loadColorWheel();
+updateOuterWheel(1);
