@@ -3,7 +3,7 @@ function $(v) {
     return document.querySelector(v);
 }
 // Globals
-var currentColor = [50, 92, 168]; // the color picker opens with blue as default
+var currentColor = 'cyan'; // the color picker opens with blue as default
 var setTurtleColor = false; // by default we are changing the color of the turtle first
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
@@ -39,8 +39,57 @@ var colorsString = ['gray',
     'violet',
     'magenta',
     'pink'];
-var numColors = colorsString.length; // number of "primary colors" in the color wheel
+// maps netlogo base color (strings) to netlogo color as number
+var mappedColors = {
+    'gray': 5,
+    'red': 15,
+    'orange': 25,
+    'brown': 35,
+    'yellow': 45,
+    'green': 55,
+    'lime': 65,
+    'turqoise': 75,
+    'cyan': 85,
+    'sky': 95,
+    'blue': 105,
+    'violet': 115,
+    'magenta': 125,
+    'pink': 135,
+};
+var numColors = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
 let degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
+/// From colors.coffee
+var colorTimesTen;
+var baseIndex;
+var r, g, b;
+var step;
+function cachedNetlogoColors() {
+    var k, results;
+    results = [];
+    for (colorTimesTen = k = 0; k <= 1400; colorTimesTen = ++k) {
+        baseIndex = Math.floor(colorTimesTen / 100);
+        [r, g, b] = netlogoBaseColors[baseIndex];
+        step = (colorTimesTen % 100 - 50) / 50.48 + 0.012;
+        if (step < 0) {
+            r += Math.floor(r * step);
+            g += Math.floor(g * step);
+            b += Math.floor(b * step);
+        }
+        else {
+            r += Math.floor((0xFF - r) * step);
+            g += Math.floor((0xFF - g) * step);
+            b += Math.floor((0xFF - b) * step);
+        }
+        results.push([r, g, b]);
+    }
+    return results;
+}
+let cached = cachedNetlogoColors();
+function netlogoColorToHex(netlogoColor) {
+    let temp = cached[Math.floor(netlogoColor * 10)];
+    return rgbToHex(temp[0], temp[1], temp[2]);
+}
+;
 // COLOR WHEEL FUNCTIONS 
 // helpers
 /**
@@ -78,6 +127,19 @@ function loadColorWheel() {
     cssFormat += rgbToHex(netlogoBaseColors[13][0], netlogoBaseColors[13][1], netlogoBaseColors[13][2]) + ` ${degreeTracker}deg 0deg`;
     colorWheel.style.cssText += cssFormat;
 }
+function updateOuterWheel(increment) {
+    let numSections = (10 / increment) + 1;
+    let degreesPerSection = 360 / numSections;
+    let cssFormat = `background-image: conic-gradient(`;
+    let degreeTracker = 0;
+    let startingGradient = mappedColors[currentColor] - 5; // start at black gradient 
+    for (let i = 0; i < numSections - 1; i++) {
+        cssFormat += netlogoColorToHex(startingGradient + i) + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
+        degreeTracker += degreesPerSection;
+    }
+    cssFormat += netlogoColorToHex(startingGradient + numSections - 1.1) + ` ${degreeTracker}deg 0deg`;
+    $("#outerWheel").style.cssText += cssFormat;
+}
 // Seting up dragging events
 function toDegrees(angle) {
     return angle * (180 / Math.PI);
@@ -107,17 +169,21 @@ function makeDraggable(evt) {
     let selectedElement;
     let colorWheelCenter = [50, 50]; // the center of the color wheel, where we have to start with  calculating distances 
     let colorWheelZeroDegPoint = [50, 25]; // the reference point for the angle arithmetic -- where we start measuring the angle 
-    let lastValidLoc = [25, 50];
+    let lastValidLocInner = [25, 50];
+    let lastValidLocOuter = [40, 95];
     svg.addEventListener('mousedown', startDrag);
     svg.addEventListener('mousemove', drag);
     svg.addEventListener('mouseup', endDrag);
     svg.addEventListener('mouseleave', endDrag);
     // dragging helpers
+    // updates the color wheel -- every time you update the current color, we need to update the outer color wheel.
     //updates the colors of the "scroller" as well as the turtle and background based on the index as compared to the array -- netlogoBaseColors
     function updateColor(index, selected) {
         let color = netlogoBaseColors[index];
         let hex = rgbToHex(color[0], color[1], color[2]);
-        selected.setAttributeNS(null, "fill", hex);
+        if (selected.id == "innerSlider") {
+            selected.setAttributeNS(null, "fill", hex);
+        }
         // update color of background or turtle
         let updateElement;
         if (setTurtleColor) {
@@ -127,6 +193,8 @@ function makeDraggable(evt) {
             updateElement = $("#background");
         }
         updateElement.setAttributeNS(null, "fill", hex);
+        currentColor = colorsString[index];
+        updateOuterWheel(1);
     }
     function getMousePosition(evt) {
         var CTM = svg.getScreenCTM();
@@ -141,7 +209,6 @@ function makeDraggable(evt) {
             selectedElement = target;
             selectedElement.classList.add("dragging");
         }
-        //console.log(selectedElement); 
     }
     function drag(evt) {
         if (selectedElement) {
@@ -149,11 +216,25 @@ function makeDraggable(evt) {
             let coordinates = getMousePosition(evt);
             let x = coordinates.x;
             let y = coordinates.y;
+            let lastValidArr;
             if (selectedElement != null && selectedElement.classList.contains('confined')) { // dragable item has to be confined 
                 let distFromCenter = distance(x, y, colorWheelCenter[0], colorWheelCenter[1]);
-                if (distFromCenter > 40 || distFromCenter < 20) {
-                    x = lastValidLoc[0];
-                    y = lastValidLoc[1];
+                // get confinement
+                let confinement;
+                let changeSliderTrackColor; // are we changing the slider track or are we changing the actual turtle color?
+                switch (selectedElement.id) {
+                    case "innerSlider":
+                        confinement = distFromCenter > 40 || distFromCenter < 20;
+                        lastValidArr = lastValidLocInner;
+                        break;
+                    case "outerSlider":
+                        confinement = distFromCenter > 48 || distFromCenter < 44;
+                        lastValidArr = lastValidLocOuter;
+                        break;
+                }
+                if (confinement) {
+                    x = lastValidArr[0];
+                    y = lastValidArr[1];
                 }
             }
             selectedElement.setAttributeNS(null, "cx", "" + x);
@@ -161,8 +242,8 @@ function makeDraggable(evt) {
             // get angle "B" is the center point 
             let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / degreesPerSV);
             updateColor(colorIndex, selectedElement); // updates the color of the "scrollersvg"
-            lastValidLoc[0] = x;
-            lastValidLoc[1] = y;
+            lastValidArr[0] = x;
+            lastValidArr[1] = y;
         }
     }
     function endDrag(evt) {
@@ -175,3 +256,4 @@ function makeDraggable(evt) {
 }
 // call functions
 loadColorWheel();
+updateOuterWheel(1);

@@ -57,10 +57,18 @@ body {
     width:26rem;
     border-radius: 0.5rem;
     text-align: center;
+    display:flex;
+    flex-direction: column;
+}
+
+/** the color wheel outer slider**/
+#outerWheel {
+    width: 100px; height: 100px;
+    background-image: conic-gradient(from 270deg, #ff4800 10%, #dfd902 35%, #20dc68, #0092f4, #da54d8 72% 75%, #ff4800 95%);
 }
 
 .colorWheel {
-    margin: auto;
+    padding-top: 3%;
 
 }
 .gradient {
@@ -76,9 +84,7 @@ body {
 }
 
   /* dragging classes */
-.static {
 
-}
 .draggable {
   cursor: move;
 }

@@ -154,8 +154,8 @@ function updateOuterWheel(increment:number): void {
     cssFormat += netlogoColorToHex(startingGradient + i) + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
     degreeTracker += degreesPerSection;
   }
-  cssFormat += netlogoColorToHex(startingGradient + numSections - 1) + ` ${degreeTracker}deg 0deg`;
-  let outerWheel = $("#outerWheel").style.cssText += cssFormat;
+  cssFormat += netlogoColorToHex(startingGradient + numSections - 1.1) + ` ${degreeTracker}deg 0deg`;
+  $("#outerWheel").style.cssText += cssFormat;
 }
 
 
@@ -191,7 +191,8 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
     let selectedElement: SVGSVGElement;
     let colorWheelCenter = [50, 50];  // the center of the color wheel, where we have to start with  calculating distances 
     let colorWheelZeroDegPoint = [50, 25]; // the reference point for the angle arithmetic -- where we start measuring the angle 
-    let lastValidLoc: number[] = [25, 50];
+    let lastValidLocInner: number[] = [25, 50];
+    let lastValidLocOuter: number[] = [40, 95];
   
     svg.addEventListener('mousedown', startDrag);
     svg.addEventListener('mousemove', drag);
@@ -205,7 +206,9 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
     function updateColor(index: number, selected: SVGSVGElement) {  
       let color = netlogoBaseColors[index];
       let hex = rgbToHex(color[0], color[1], color[2]);
-      selected.setAttributeNS(null, "fill", hex);
+      if(selected.id == "innerSlider") {
+        selected.setAttributeNS(null, "fill", hex);
+      }
       // update color of background or turtle
       let updateElement: SVGSVGElement;
       if(setTurtleColor) {
@@ -233,7 +236,6 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
         selectedElement = target;
         selectedElement.classList.add("dragging");
       }
-      //console.log(selectedElement); 
     }
     
     function drag(evt: MouseEvent): void {
@@ -243,12 +245,27 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
   
         let x = coordinates.x;
         let y = coordinates.y;
+        let lastValidArr: number[];
         if(selectedElement != null && selectedElement.classList.contains('confined')) { // dragable item has to be confined 
           let distFromCenter = distance(x, y, colorWheelCenter[0], colorWheelCenter[1]);
-          if(distFromCenter > 40 || distFromCenter < 20) {
-            x = lastValidLoc[0];
-            y = lastValidLoc[1];
+          // get confinement
+          let confinement: boolean;
+          let changeSliderTrackColor: boolean; // are we changing the slider track or are we changing the actual turtle color?
+          switch(selectedElement.id) {
+            case "innerSlider":
+              confinement = distFromCenter > 40 || distFromCenter < 20;
+              lastValidArr = lastValidLocInner;
+              break;
+            case "outerSlider":
+              confinement = distFromCenter > 48 || distFromCenter < 44;
+              lastValidArr = lastValidLocOuter;
+              break;
           }
+          if(confinement) {
+            x = lastValidArr[0];
+            y = lastValidArr[1];
+          }
+
         }
   
         selectedElement.setAttributeNS(null, "cx", "" + x);
@@ -256,8 +273,8 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
         // get angle "B" is the center point 
         let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / degreesPerSV);
         updateColor(colorIndex, selectedElement); // updates the color of the "scrollersvg"
-        lastValidLoc[0] = x;
-        lastValidLoc[1] = y;
+        lastValidArr[0] = x;
+        lastValidArr[1] = y;
       }
     }
   
