@@ -5,7 +5,7 @@ function $(v: string) {
 
 // Globals
 var currentColor:number[] = [50, 92, 168] // the color picker opens with blue as default
-var setTurtleColor:boolean = true; // by default we are changing the color of the turtle first
+var setTurtleColor:boolean = false; // by default we are changing the color of the turtle first
 
 // set up color model
 const netlogoBaseColors: [number, number, number][] = [  [140, 140, 140], // gray       (5)
@@ -135,9 +135,17 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
       let color = netlogoBaseColors[index];
       let hex = rgbToHex(color[0], color[1], color[2]);
       selected.setAttributeNS(null, "fill", hex);
-      let background: SVGSVGElement = $("#background") as unknown as SVGSVGElement;
-      background.setAttributeNS(null, "fill", hex);
+      // update color of background or turtle
+      let updateElement: SVGSVGElement;
+      if(setTurtleColor) {
+        updateElement = $("#turtle") as unknown as SVGSVGElement;
+      }
+      else {
+        updateElement = $("#background") as unknown as SVGSVGElement;
+      }
+      updateElement.setAttributeNS(null, "fill", hex);
     }
+    
     function getMousePosition(evt) {
       var CTM = svg.getScreenCTM();
       return {
@@ -157,7 +165,6 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
     
     function drag(evt: MouseEvent): void {
       if (selectedElement) {
-        console.log(lastValidLoc);
         evt.preventDefault();
         let coordinates = getMousePosition(evt);
   

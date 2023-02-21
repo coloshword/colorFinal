@@ -4,7 +4,7 @@ function $(v) {
 }
 // Globals
 var currentColor = [50, 92, 168]; // the color picker opens with blue as default
-var setTurtleColor = true; // by default we are changing the color of the turtle first
+var setTurtleColor = false; // by default we are changing the color of the turtle first
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -118,8 +118,15 @@ function makeDraggable(evt) {
         let color = netlogoBaseColors[index];
         let hex = rgbToHex(color[0], color[1], color[2]);
         selected.setAttributeNS(null, "fill", hex);
-        let background = $("#background");
-        background.setAttributeNS(null, "fill", hex);
+        // update color of background or turtle
+        let updateElement;
+        if (setTurtleColor) {
+            updateElement = $("#turtle");
+        }
+        else {
+            updateElement = $("#background");
+        }
+        updateElement.setAttributeNS(null, "fill", hex);
     }
     function getMousePosition(evt) {
         var CTM = svg.getScreenCTM();
@@ -138,7 +145,6 @@ function makeDraggable(evt) {
     }
     function drag(evt) {
         if (selectedElement) {
-            console.log(lastValidLoc);
             evt.preventDefault();
             let coordinates = getMousePosition(evt);
             let x = coordinates.x;
