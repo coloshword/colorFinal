@@ -187,7 +187,8 @@ function makeDraggable(evt) {
             updateOuterWheel(1);
         }
         else {
-            // we moved the outer slider 
+            // we moved the outer slider , we have the correct index
+            //hex = netlogoColorToHex(mappedColors[currentColor] + index);
         }
         // update color of background or turtle
         let updateElement;
@@ -218,7 +219,6 @@ function makeDraggable(evt) {
         if (selectedElement) {
             evt.preventDefault();
             let coordinates = getMousePosition(evt);
-            console.log(coordinates);
             let x = coordinates.x;
             let y = coordinates.y;
             let lastValidArr;

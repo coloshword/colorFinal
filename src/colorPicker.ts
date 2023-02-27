@@ -211,7 +211,8 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
         updateOuterWheel(1);
       }
       else {
-        // we moved the outer slider 
+        // we moved the outer slider , we have the correct index
+        //hex = netlogoColorToHex(mappedColors[currentColor] + index);
       }
       // update color of background or turtle
       let updateElement: SVGSVGElement;
@@ -245,7 +246,6 @@ function distance(x1:number, y1:number, x2:number, y2:number): number  {
       if (selectedElement) {
         evt.preventDefault();
         let coordinates = getMousePosition(evt);
-        console.log(coordinates);
         let x = coordinates.x;
         let y = coordinates.y;
         let lastValidArr: number[];
