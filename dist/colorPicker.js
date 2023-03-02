@@ -10,6 +10,7 @@ let incrementBox = null;
 let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
 let colorWheelZeroDegPoint = [50, 25]; // reference point for angle calculation
 let currentIncrement;
+let outerWheelRadius = 50 - 4.1;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -202,6 +203,14 @@ function findAngle(a, b, c, d, e, f) {
     }
     return outOf180Degrees;
 }
+function outerSliderConfinement(radius, angle, x1, y1) {
+    let angleInRadians = angle * Math.PI / 180;
+    let xRestrict = x1 + radius * Math.sin(angleInRadians);
+    let yRestrict = y1 - radius * Math.cos(angleInRadians);
+    return {
+        xRestrict, yRestrict
+    };
+}
 // Color wheel update colors
 function updateColor(angle, draggedElement) {
     switch (draggedElement.id) {
@@ -252,6 +261,13 @@ function makeDraggable(evt) {
                     //update color of the sliderThumb
                     let sliderAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y); // the index of the color the inner sliderthumb is on -- measured by angle 
                     updateColor(sliderAngle, selectedElement);
+                    break;
+                case "outerSlider":
+                    let angleC = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y);
+                    let confine = outerSliderConfinement(outerWheelRadius, angleC, colorWheelCenter[0], colorWheelCenter[1]);
+                    x = confine.xRestrict;
+                    y = confine.yRestrict;
+                    break;
             }
             selectedElement.setAttributeNS(null, "cx", "" + x);
             selectedElement.setAttributeNS(null, "cy", "" + y);
