@@ -10,7 +10,10 @@ let incrementBox = null;
 let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
 let colorWheelZeroDegPoint = [50, 25]; // reference point for angle calculation
 let currentIncrement;
+let lastOuterWheelCor = [47.69, 4.16];
+let lastInnerWheelCor = [32, 72];
 let outerWheelRadius = 50 - 4.1;
+let currentOuterWheelColors;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -117,12 +120,12 @@ function rgbToHex(r, g, b) {
 }
 function loadWheels(wheelID, increment = 1) {
     let element = $(wheelID);
-    let hexArray = [];
+    let outerHexArray = [];
     switch (wheelID) {
         case "#inner":
             numColors = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
             for (let i = 0; i < numColors; i++) {
-                hexArray.push(rgbToHex(netlogoBaseColors[i][0], netlogoBaseColors[i][1], netlogoBaseColors[i][2]));
+                outerHexArray.push(rgbToHex(netlogoBaseColors[i][0], netlogoBaseColors[i][1], netlogoBaseColors[i][2]));
             }
             break;
         case "#outer":
@@ -130,20 +133,24 @@ function loadWheels(wheelID, increment = 1) {
             let start_gradient = mappedColors[currentColor] - 5;
             numColors = (10 / increment) + 1;
             for (let i = 0; i < numColors - 1; i++) {
-                hexArray.push(netlogoColorToHex(start_gradient + i * increment));
+                outerHexArray.push(netlogoColorToHex(start_gradient + i * increment));
             }
-            hexArray.push(netlogoColorToHex(start_gradient + 9.9)); // the last color is always the start + 9.9, regardless of what the increment is
+            outerHexArray.push(netlogoColorToHex(start_gradient + 9.9)); // the last color is always the start + 9.9, regardless of what the increment is
             break;
     }
     degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
     let cssFormat = `background-image: conic-gradient(`;
     let degreeTracker = 0;
     for (let i = 0; i < numColors - 1; i++) {
-        cssFormat += hexArray[i] + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
+        cssFormat += outerHexArray[i] + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
         degreeTracker += degreesPerSV;
     }
-    cssFormat += hexArray[numColors - 1] + ` ${degreeTracker}deg 0deg`;
+    cssFormat += outerHexArray[numColors - 1] + ` ${degreeTracker}deg 0deg`;
     element.style.cssText += cssFormat;
+    if (wheelID == "#outer") {
+        return outerHexArray;
+    }
+    return null;
 }
 // Increment section
 function setupIncrements() {
@@ -185,7 +192,7 @@ function updateIncrement(increment) {
             break;
     }
     currentIncrement = increment;
-    loadWheels("#outer", increment);
+    currentOuterWheelColors = loadWheels("#outer", increment);
 }
 function toDegrees(angle) {
     return angle * (180 / Math.PI);
@@ -213,17 +220,27 @@ function outerSliderConfinement(radius, angle, x1, y1) {
 }
 // Color wheel update colors
 function updateColor(angle, draggedElement) {
+    let colorIndex = 0;
     switch (draggedElement.id) {
         case "innerSlider":
             //The inner slider we update the netlogo color of the outer wheel as well as the color of the slider itself
             // get current color based on angle 
-            let colorIndex = Math.floor(angle / (360 / colorsString.length)); // the index of the netlogo color
+            colorIndex = Math.floor(angle / (360 / colorsString.length)); // the index of the netlogo color
             //update color of the thumb
             let color = netlogoBaseColors[colorIndex];
             draggedElement.setAttributeNS(null, "fill", rgbToHex(color[0], color[1], color[2]));
             //update the outerwheel
             currentColor = colorsString[colorIndex]; //update the currentcolor
-            loadWheels("#outer", currentIncrement);
+            currentOuterWheelColors = loadWheels("#outer", currentIncrement);
+            //update the Outerslider with last known location
+            let outerAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], lastOuterWheelCor[0], lastOuterWheelCor[1]);
+            colorIndex = Math.floor((outerAngle / (360 / ((10 / currentIncrement) + 1))));
+            $("#turtle").style.fill = currentOuterWheelColors[colorIndex];
+            break;
+        case "outerSlider":
+            colorIndex = Math.floor((angle / (360 / ((10 / currentIncrement) + 1))));
+            $("#turtle").style.fill = currentOuterWheelColors[colorIndex];
+            break;
     }
 }
 // Seting up dragging events
@@ -261,12 +278,17 @@ function makeDraggable(evt) {
                     //update color of the sliderThumb
                     let sliderAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y); // the index of the color the inner sliderthumb is on -- measured by angle 
                     updateColor(sliderAngle, selectedElement);
+                    lastInnerWheelCor[0] = x;
+                    lastInnerWheelCor[1] = y;
                     break;
                 case "outerSlider":
                     let angleC = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y);
                     let confine = outerSliderConfinement(outerWheelRadius, angleC, colorWheelCenter[0], colorWheelCenter[1]);
                     x = confine.xRestrict;
                     y = confine.yRestrict;
+                    lastOuterWheelCor[0] = x;
+                    lastOuterWheelCor[1] = y;
+                    updateColor(angleC, selectedElement);
                     break;
             }
             selectedElement.setAttributeNS(null, "cx", "" + x);
@@ -282,5 +304,5 @@ function makeDraggable(evt) {
 }
 // call functions
 loadWheels("#inner");
-loadWheels('#outer', 1);
+currentOuterWheelColors = loadWheels('#outer', 1);
 setupIncrements();
