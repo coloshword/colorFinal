@@ -2,11 +2,14 @@
 function $(v) {
     return document.querySelector(v);
 }
-// Globals
+// Globals for colorwheel
 var currentColor = 'cyan'; // the color picker opens with blue as default
 var setTurtleColor = false; // by default we are changing the color of the turtle first
 let numColors, degreesPerSV;
 let incrementBox = null;
+let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
+let colorWheelZeroDegPoint = [50, 25]; // reference point for angle calculation
+let currentIncrement;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -90,8 +93,7 @@ function netlogoColorToHex(netlogoColor) {
     return rgbToHex(temp[0], temp[1], temp[2]);
 }
 ;
-// COLOR WHEEL FUNCTIONS 
-// helpers
+//colorWheel helper functions
 /**
  * Returns the hex component of a single value of RGB (input is one of R, G, or B)
  * @param c the RGB component you want to convert
@@ -181,7 +183,39 @@ function updateIncrement(increment) {
             increment = 0.1;
             break;
     }
+    currentIncrement = increment;
     loadWheels("#outer", increment);
+}
+function toDegrees(angle) {
+    return angle * (180 / Math.PI);
+}
+/* takes three points and returns the angle between them -- goes to 360!
+"B" is the center point, meaning pair (d, e), "A" is the reference "zero" point, "C" is the last point  */
+function findAngle(a, b, c, d, e, f) {
+    let AB = Math.sqrt(Math.pow(c - a, 2) + Math.pow(d - b, 2));
+    let BC = Math.sqrt(Math.pow(c - e, 2) + Math.pow(d - f, 2));
+    let AC = Math.sqrt(Math.pow(e - a, 2) + Math.pow(f - b, 2));
+    let outOf180Degrees = toDegrees((Math.acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))));
+    // if we are "positive" relative to the axis -- the center point to the top "zero" point, then we just return, else we return 360 - outOf180
+    if (e < c) {
+        return 360 - outOf180Degrees;
+    }
+    return outOf180Degrees;
+}
+// Color wheel update colors
+function updateColor(angle, draggedElement) {
+    switch (draggedElement.id) {
+        case "innerSlider":
+            //The inner slider we update the netlogo color of the outer wheel as well as the color of the slider itself
+            // get current color based on angle 
+            let colorIndex = Math.floor(angle / (360 / colorsString.length)); // the index of the netlogo color
+            //update color of the thumb
+            let color = netlogoBaseColors[colorIndex];
+            draggedElement.setAttributeNS(null, "fill", rgbToHex(color[0], color[1], color[2]));
+            //update the outerwheel
+            currentColor = colorsString[colorIndex]; //update the currentcolor
+            loadWheels("#outer", currentIncrement);
+    }
 }
 // Seting up dragging events
 function makeDraggable(evt) {
@@ -212,6 +246,13 @@ function makeDraggable(evt) {
             let coordinates = getMousePosition(evt);
             let x = coordinates.x;
             let y = coordinates.y;
+            // switch case for unique behavior between draggable objects
+            switch (selectedElement.id) {
+                case "innerSlider":
+                    //update color of the sliderThumb
+                    let sliderAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y); // the index of the color the inner sliderthumb is on -- measured by angle 
+                    updateColor(sliderAngle, selectedElement);
+            }
             selectedElement.setAttributeNS(null, "cx", "" + x);
             selectedElement.setAttributeNS(null, "cy", "" + y);
         }
