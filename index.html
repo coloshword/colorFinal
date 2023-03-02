@@ -18,33 +18,30 @@
             <div class="display">
                 <div class="colorWheel">
                     <svg viewBox="0 0 100 100" width = "300" height = "300" onload="makeDraggable(evt)">
+                        <!--SVG for outerslider -->
                         <clipPath id="clipOuter">
                             <path d="M 50 2 a 48 48 0 0 1 0 96 48 48 0 0 1 0 -96 v 4 a 44 44 0 0 0 0 88 44 44 0 0 0 0 -88"/>
                         </clipPath>
-                        
                         <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clipOuter)">
-                            <div id="outerWheel"></div>
+                            <div id="outer"></div>
                         </foreignObject>
-
+                        <!--SVG for inner slider-->
                         <clipPath id="clip">
                             <path d="M 50 10 A 40 40 0 1 0 50 90 A 40 40 0 1 0 50 10 Z M 50 30 A 20 20 0 1 1 50 70 A 20 20 0 1 1 50 30 Z" />
                         </clipPath>
     
                         <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clip)">
-                            <div class="gradient"></div>
+                            <div id="inner"></div>
                         </foreignObject>
-
-                        <circle cx="32" cy="72" r="2" stroke="white" stroke-width="1.2" fill="#52C4C4" class="slider draggable confined" id="innerSlider"/>
-     
-                        <circle cx="78" cy="86.5" r="2" stroke="#D3D3D3" stroke-width="0.5" fill="white" class="slider draggable confined" id="outerSlider"/>
+                        <!-- the two slider thumbs-->
+                        <circle cx="32" cy="72" r="2" stroke="white" stroke-width="1.2" fill="#52C4C4" class="sliderThumb confined" id="innerSlider"/>
+                        <circle cx="78" cy="86.5" r="2" stroke="#D3D3D3" stroke-width="0.5" fill="white" class="sliderThumb confined" id="outerSlider"/>
                     </svg>
                 </div>
                 <div class="incrementContainer">
                 </div>
             </div>
             <div class="turtleResultDisplay">
-                <!-- the turtle display SVG-->
-                    
                 <svg viewBox="0 0 100 100" width = "100%" height="14.4em">
                     <rect x="0" y="0" width="100%" height="100%" fill="#52C4C4" rx="3" id="background" onclick="setTurtleColor=false"></rect>
                     <path xmlns="http://www.w3.org/2000/svg" onclick="setTurtleColor=true"id="turtle" fill="white" d="M 50.069 9.889 L 14.945 89.069 L 50.71 65.458 L 86.458 89.73 L 50.069 9.889 Z"/>

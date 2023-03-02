@@ -5,6 +5,8 @@ function $(v) {
 // Globals
 var currentColor = 'cyan'; // the color picker opens with blue as default
 var setTurtleColor = false; // by default we are changing the color of the turtle first
+let numColors, degreesPerSV;
+let incrementBox = null;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -56,9 +58,6 @@ var mappedColors = {
     'magenta': 125,
     'pink': 135,
 };
-var numColors = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
-let degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
-let degreesPerSection;
 /// From colors.coffee
 var colorTimesTen;
 var baseIndex;
@@ -113,96 +112,87 @@ function rgbToHex(r, g, b) {
     let ans = "#" + componentToHex(r) + componentToHex(g) + componentToHex(b);
     return ans.toUpperCase();
 }
-/**
- * Void function that controls the color wheel DOM that displays primary colors
- */
-function loadColorWheel() {
-    // implement
-    let colorWheel = $('.gradient');
+function loadWheels(wheelID, increment = 1) {
+    let element = $(wheelID);
+    let hexArray = [];
+    switch (wheelID) {
+        case "#inner":
+            numColors = Object.keys(mappedColors).length; // number of "primary colors" in the color wheel
+            for (let i = 0; i < numColors; i++) {
+                hexArray.push(rgbToHex(netlogoBaseColors[i][0], netlogoBaseColors[i][1], netlogoBaseColors[i][2]));
+            }
+            break;
+        case "#outer":
+            // based on the current color
+            let start_gradient = mappedColors[currentColor] - 5;
+            numColors = (10 / increment) + 1;
+            for (let i = 0; i < numColors - 1; i++) {
+                hexArray.push(netlogoColorToHex(start_gradient + i * increment));
+            }
+            hexArray.push(netlogoColorToHex(start_gradient + 9.9)); // the last color is always the start + 9.9, regardless of what the increment is
+            break;
+    }
+    degreesPerSV = 360 / numColors; // the arc length each color takes up in the color wheel
     let cssFormat = `background-image: conic-gradient(`;
     let degreeTracker = 0;
     for (let i = 0; i < numColors - 1; i++) {
-        cssFormat += rgbToHex(netlogoBaseColors[i][0], netlogoBaseColors[i][1], netlogoBaseColors[i][2]) + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
+        cssFormat += hexArray[i] + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
         degreeTracker += degreesPerSV;
     }
-    cssFormat += rgbToHex(netlogoBaseColors[13][0], netlogoBaseColors[13][1], netlogoBaseColors[13][2]) + ` ${degreeTracker}deg 0deg`;
-    colorWheel.style.cssText += cssFormat;
+    cssFormat += hexArray[numColors - 1] + ` ${degreeTracker}deg 0deg`;
+    element.style.cssText += cssFormat;
 }
-function updateOuterWheel(increment) {
-    let numSections = (10 / increment) + 1;
-    degreesPerSection = 360 / numSections;
-    let cssFormat = `background-image: conic-gradient(`;
-    let degreeTracker = 0;
-    let startingGradient = mappedColors[currentColor] - 5; // start at black gradient 
-    for (let i = 0; i < numSections - 1; i++) {
-        cssFormat += netlogoColorToHex(startingGradient + i) + ` ${degreeTracker}deg ${degreeTracker + degreesPerSV}deg, `;
-        degreeTracker += degreesPerSection;
+// Increment section
+function setupIncrements() {
+    let container = $(".incrementContainer");
+    let innerHTML = `<div class='increment'>
+    <div class='checkboxContainer'>
+      <div class='checkbox' id='box1' onclick="updateIncrement(1)"></div>
+      <div class='boxText'>1</div>
+    </div>
+    <div class='checkboxContainer'>
+      <div class='checkbox' id='box2' onclick="updateIncrement(2)"></div>
+      <div class='boxText'>0.5</div>
+    </div>
+    <div class='checkboxContainer'>
+    <div class='checkbox' id='box3' onclick="updateIncrement(3)"></div>
+    <div class='boxText'>0.1</div>
+    </div>
+    <div class='boxText'>Increment</div>
+  </div>`;
+    container.innerHTML = innerHTML;
+    updateIncrement(1);
+}
+function updateIncrement(increment) {
+    let checkbox = $('#box' + increment);
+    if (incrementBox != null) {
+        incrementBox.classList.remove('clicked');
     }
-    cssFormat += netlogoColorToHex(startingGradient + numSections - 1.1) + ` ${degreeTracker}deg 0deg`;
-    $("#outerWheel").style.cssText += cssFormat;
+    checkbox.classList.add('clicked');
+    incrementBox = checkbox;
+    switch (increment) {
+        case 1:
+            increment = 1;
+            break;
+        case 2:
+            increment = 0.5;
+            break;
+        case 3:
+            increment = 0.1;
+            break;
+    }
+    loadWheels("#outer", increment);
 }
 // Seting up dragging events
-function toDegrees(angle) {
-    return angle * (180 / Math.PI);
-}
-/* takes three points and returns the angle between them -- goes to 360!
-"B" is the center point, meaning pair (d, e), "A" is the reference "zero" point, "C" is the last point  */
-function findAngle(a, b, c, d, e, f) {
-    let AB = Math.sqrt(Math.pow(c - a, 2) + Math.pow(d - b, 2));
-    let BC = Math.sqrt(Math.pow(c - e, 2) + Math.pow(d - f, 2));
-    let AC = Math.sqrt(Math.pow(e - a, 2) + Math.pow(f - b, 2));
-    let outOf180Degrees = toDegrees((Math.acos((BC * BC + AB * AB - AC * AC) / (2 * BC * AB))));
-    // if we are "positive" relative to the axis -- the center point to the top "zero" point, then we just return, else we return 360 - outOf180
-    if (e < c) {
-        return 360 - outOf180Degrees;
-    }
-    return outOf180Degrees;
-}
-/* dragging confinement functions */
-function distance(x1, y1, x2, y2) {
-    let a = x1 - x2;
-    let b = y1 - y2;
-    return Math.sqrt(a * a + b * b);
-}
-/* main dragging functions */
 function makeDraggable(evt) {
-    let svg = evt.target;
+    let svg_viewbox = evt.target;
     let selectedElement;
-    let colorWheelCenter = [50, 50]; // the center of the color wheel, where we have to start with  calculating distances 
-    let colorWheelZeroDegPoint = [50, 25]; // the reference point for the angle arithmetic -- where we start measuring the angle 
-    let lastValidLocInner = [25, 50];
-    let lastValidLocOuter = [40, 95];
-    svg.addEventListener('mousedown', startDrag);
-    svg.addEventListener('mousemove', drag);
-    svg.addEventListener('mouseup', endDrag);
-    svg.addEventListener('mouseleave', endDrag);
-    // dragging helpers
-    // updates the color wheel -- every time you update the current color, we need to update the outer color wheel.
-    //updates the colors of the "scroller" as well as the turtle and background based on the index as compared to the array -- netlogoBaseColors
-    function updateColor(index, selected) {
-        let color = netlogoBaseColors[index];
-        let hex = rgbToHex(color[0], color[1], color[2]);
-        if (selected.id == "innerSlider") {
-            selected.setAttributeNS(null, "fill", hex);
-            updateOuterWheel(1);
-        }
-        else {
-            // we moved the outer slider , we have the correct index
-            //hex = netlogoColorToHex(mappedColors[currentColor] + index);
-        }
-        // update color of background or turtle
-        let updateElement;
-        if (setTurtleColor) {
-            updateElement = $("#turtle");
-        }
-        else {
-            updateElement = $("#background");
-        }
-        updateElement.setAttributeNS(null, "fill", hex);
-        currentColor = colorsString[index];
-    }
+    svg_viewbox.addEventListener('mousedown', startDrag);
+    svg_viewbox.addEventListener('mousemove', drag);
+    svg_viewbox.addEventListener('mouseup', endDrag);
+    svg_viewbox.addEventListener('mouseleave', endDrag);
     function getMousePosition(evt) {
-        var CTM = svg.getScreenCTM();
+        var CTM = svg_viewbox.getScreenCTM();
         return {
             x: (evt.clientX - CTM.e) / CTM.a,
             y: (evt.clientY - CTM.f) / CTM.d
@@ -210,9 +200,10 @@ function makeDraggable(evt) {
     }
     function startDrag(evt) {
         let target = evt.target;
-        if (target.classList.contains('draggable')) {
+        if (target.classList.contains('sliderThumb')) {
             selectedElement = target;
             selectedElement.classList.add("dragging");
+            console.log("starting drag of " + selectedElement);
         }
     }
     function drag(evt) {
@@ -221,41 +212,11 @@ function makeDraggable(evt) {
             let coordinates = getMousePosition(evt);
             let x = coordinates.x;
             let y = coordinates.y;
-            let lastValidArr;
-            let indexHelper;
-            if (selectedElement != null && selectedElement.classList.contains('confined')) { // dragable item has to be confined 
-                let distFromCenter = distance(x, y, colorWheelCenter[0], colorWheelCenter[1]);
-                // get confinement
-                let confinement;
-                let changeSliderTrackColor; // are we changing the slider track or are we changing the actual turtle color?
-                switch (selectedElement.id) {
-                    case "innerSlider":
-                        confinement = distFromCenter > 40 || distFromCenter < 20;
-                        lastValidArr = lastValidLocInner;
-                        indexHelper = degreesPerSV;
-                        break;
-                    case "outerSlider":
-                        confinement = distFromCenter > 48 || distFromCenter < 44;
-                        lastValidArr = lastValidLocOuter;
-                        indexHelper = degreesPerSection;
-                        break;
-                }
-                if (confinement) {
-                    x = lastValidArr[0];
-                    y = lastValidArr[1];
-                }
-            }
             selectedElement.setAttributeNS(null, "cx", "" + x);
             selectedElement.setAttributeNS(null, "cy", "" + y);
-            // get angle "B" is the center point 
-            let colorIndex = Math.floor((findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y)) / indexHelper);
-            updateColor(colorIndex, selectedElement); // updates the color of the "scrollersvg"
-            lastValidArr[0] = x;
-            lastValidArr[1] = y;
         }
     }
     function endDrag(evt) {
-        // implementation
         if (selectedElement != null) {
             selectedElement.classList.remove("dragging");
         }
@@ -263,5 +224,6 @@ function makeDraggable(evt) {
     }
 }
 // call functions
-loadColorWheel();
-updateOuterWheel(1);
+loadWheels("#inner");
+loadWheels('#outer', 1);
+setupIncrements();
