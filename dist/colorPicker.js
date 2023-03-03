@@ -15,6 +15,8 @@ let lastOuterWheelCor = [78, 86.5];
 let lastInnerWheelCor = [25, 50];
 let outerWheelRadius = 50 - 4.1;
 let currentOuterWheelColors;
+let innerWheelOuterRadius = 40;
+let innerWheelInnerRadius = 20;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -195,6 +197,11 @@ function updateIncrement(increment) {
     currentIncrement = increment;
     currentOuterWheelColors = loadWheels("#outer", increment);
 }
+function distance(x1, y1, x2, y2) {
+    let a = x1 - x2;
+    let b = y1 - y2;
+    return Math.sqrt(a * a + b * b);
+}
 function toDegrees(angle) {
     return angle * (180 / Math.PI);
 }
@@ -211,7 +218,7 @@ function findAngle(a, b, c, d, e, f) {
     }
     return outOf180Degrees;
 }
-function outerSliderConfinement(radius, angle, x1, y1) {
+function confinement(radius, angle, x1, y1) {
     let angleInRadians = angle * Math.PI / 180;
     let xRestrict = x1 + radius * Math.sin(angleInRadians);
     let yRestrict = y1 - radius * Math.cos(angleInRadians);
@@ -279,18 +286,32 @@ function makeDraggable(evt) {
             let coordinates = getMousePosition(evt);
             let x = coordinates.x;
             let y = coordinates.y;
+            let confine;
+            //console.log(`${x}, ${y}`);
             // switch case for unique behavior between draggable objects
             switch (selectedElement.id) {
                 case "innerSlider":
                     //update color of the sliderThumb
                     let sliderAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y); // the index of the color the inner sliderthumb is on -- measured by angle 
                     updateColor(sliderAngle, selectedElement);
+                    // check confinement  -- outer distance cant be more than 40
+                    if (distance(colorWheelCenter[0], colorWheelCenter[1], x, y) > innerWheelOuterRadius) {
+                        // get x and y based on angle  instead
+                        confine = confinement(innerWheelOuterRadius, sliderAngle, colorWheelCenter[0], colorWheelCenter[1]);
+                        x = confine.xRestrict;
+                        y = confine.yRestrict;
+                    }
+                    else if (distance(colorWheelCenter[0], colorWheelCenter[1], x, y) < innerWheelInnerRadius) {
+                        confine = confinement(innerWheelInnerRadius, sliderAngle, colorWheelCenter[0], colorWheelCenter[1]);
+                        x = confine.xRestrict;
+                        y = confine.yRestrict;
+                    }
                     lastInnerWheelCor[0] = x;
                     lastInnerWheelCor[1] = y;
                     break;
                 case "outerSlider":
                     let angleC = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], x, y);
-                    let confine = outerSliderConfinement(outerWheelRadius, angleC, colorWheelCenter[0], colorWheelCenter[1]);
+                    confine = confinement(outerWheelRadius, angleC, colorWheelCenter[0], colorWheelCenter[1]);
                     x = confine.xRestrict;
                     y = confine.yRestrict;
                     lastOuterWheelCor[0] = x;
