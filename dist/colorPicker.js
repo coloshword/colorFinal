@@ -5,7 +5,7 @@ function $(v) {
 // Globals applicable to color wheel in general
 var setTurtleColor = true; // by default we are changing the color of the turtle first --> flag that determines if we are changing turtle color or background color
 // Globals for colorwheel
-var currentColor = 'cyan'; // the color picker opens with blue as default
+var currentColor = 'blue'; // the color picker opens with blue as default
 let numColors, degreesPerSV;
 let incrementBox = null;
 let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
@@ -68,6 +68,18 @@ var mappedColors = {
     'magenta': 125,
     'pink': 135,
 };
+//Turtle editing functions
+function updateTurtleColor(b) {
+    setTurtleColor = b;
+    let element = $(".modelIndicator");
+    if (b) {
+        // we are currently in turtle selection mode
+        element.innerHTML = "Model Color Selected";
+    }
+    else {
+        element.innerHTML = "Background Color Selected";
+    }
+}
 /// From colors.coffee
 var colorTimesTen;
 var baseIndex;
@@ -334,3 +346,4 @@ function makeDraggable(evt) {
 loadWheels("#inner");
 currentOuterWheelColors = loadWheels('#outer', 1);
 setupIncrements();
+updateTurtleColor(true);

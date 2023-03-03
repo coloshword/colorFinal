@@ -12,7 +12,16 @@
         <div class="header">
             <div class="headerText">Color Swatches</div>
         </div>
-        <div class="selection"></div>
+        <div class="selection">
+            <div class="selectionOptions">
+                <div class="selectionMode" id="g">Grid</div>
+                <div class="selectionMode" id="w">Wheel</div>
+                <div class="selectionMode" id="s">Slider</div>
+            </div>
+            <div class="modelBackgroundIndicator">
+                <div class="selectionMode modelIndicator" onclick="updateTurtleColor(!setTurtleColor)" >Model Color Selected</div>
+            </div>
+        </div>
         <!-- The actual colorWheel Part-->
         <div class="parameters"> <!--The stuff below the selection mode-->
             <div class="display">
@@ -43,8 +52,8 @@
             </div>
             <div class="turtleResultDisplay">
                 <svg viewBox="0 0 100 100" width = "100%" height="14.4em">
-                    <rect x="0" y="0" width="100%" height="100%" fill="#52C4C4" rx="3" id="background" onclick="setTurtleColor=false"></rect>
-                    <path xmlns="http://www.w3.org/2000/svg" onclick="setTurtleColor=true"id="turtle" fill="#284A88" d="M 50.069 9.889 L 14.945 89.069 L 50.71 65.458 L 86.458 89.73 L 50.069 9.889 Z"/>
+                    <rect x="0" y="0" width="100%" height="100%" fill="#52C4C4" rx="3" id="background" onclick="updateTurtleColor(false)"></rect>
+                    <path xmlns="http://www.w3.org/2000/svg" onclick="updateTurtleColor(true)"id="turtle" fill="#284A88" d="M 50.069 9.889 L 14.945 89.069 L 50.71 65.458 L 86.458 89.73 L 50.069 9.889 Z"/>
                 </svg>
             </div>
         </div>
