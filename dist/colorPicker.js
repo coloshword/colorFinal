@@ -2,16 +2,17 @@
 function $(v) {
     return document.querySelector(v);
 }
+// Globals applicable to color wheel in general
+var setTurtleColor = true; // by default we are changing the color of the turtle first --> flag that determines if we are changing turtle color or background color
 // Globals for colorwheel
 var currentColor = 'cyan'; // the color picker opens with blue as default
-var setTurtleColor = false; // by default we are changing the color of the turtle first
 let numColors, degreesPerSV;
 let incrementBox = null;
 let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
 let colorWheelZeroDegPoint = [50, 25]; // reference point for angle calculation
 let currentIncrement;
-let lastOuterWheelCor = [47.69, 4.16];
-let lastInnerWheelCor = [32, 72];
+let lastOuterWheelCor = [78, 86.5];
+let lastInnerWheelCor = [25, 50];
 let outerWheelRadius = 50 - 4.1;
 let currentOuterWheelColors;
 // set up color model
@@ -221,6 +222,13 @@ function outerSliderConfinement(radius, angle, x1, y1) {
 // Color wheel update colors
 function updateColor(angle, draggedElement) {
     let colorIndex = 0;
+    let toChangeId; // the id of the element we are supposed to update the color of -- background or turtle
+    if (setTurtleColor) {
+        toChangeId = "#turtle";
+    }
+    else {
+        toChangeId = "#background";
+    }
     switch (draggedElement.id) {
         case "innerSlider":
             //The inner slider we update the netlogo color of the outer wheel as well as the color of the slider itself
@@ -235,11 +243,11 @@ function updateColor(angle, draggedElement) {
             //update the Outerslider with last known location
             let outerAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], lastOuterWheelCor[0], lastOuterWheelCor[1]);
             colorIndex = Math.floor((outerAngle / (360 / ((10 / currentIncrement) + 1))));
-            $("#turtle").style.fill = currentOuterWheelColors[colorIndex];
+            $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
             break;
         case "outerSlider":
             colorIndex = Math.floor((angle / (360 / ((10 / currentIncrement) + 1))));
-            $("#turtle").style.fill = currentOuterWheelColors[colorIndex];
+            $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
             break;
     }
 }
@@ -263,7 +271,6 @@ function makeDraggable(evt) {
         if (target.classList.contains('sliderThumb')) {
             selectedElement = target;
             selectedElement.classList.add("dragging");
-            console.log("starting drag of " + selectedElement);
         }
     }
     function drag(evt) {
