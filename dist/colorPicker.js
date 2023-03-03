@@ -2,6 +2,30 @@
 function $(v) {
     return document.querySelector(v);
 }
+let wheelHTML = `<div class="colorWheel">
+<svg viewBox="0 0 100 100" width = "300" height = "300" onload="makeDraggable(evt)">
+    <!--SVG for outerslider -->
+    <clipPath id="clipOuter">
+        <path d="M 50 2 a 48 48 0 0 1 0 96 48 48 0 0 1 0 -96 v 4 a 44 44 0 0 0 0 88 44 44 0 0 0 0 -88"/>
+    </clipPath>
+    <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clipOuter)">
+        <div id="outer"></div>
+    </foreignObject>
+    <!--SVG for inner slider-->
+    <clipPath id="clip">
+        <path d="M 50 10 A 40 40 0 1 0 50 90 A 40 40 0 1 0 50 10 Z M 50 30 A 20 20 0 1 1 50 70 A 20 20 0 1 1 50 30 Z" />
+    </clipPath>
+
+    <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clip)">
+        <div id="inner"></div>
+    </foreignObject>
+    <!-- the two slider thumbs-->57.999999135732665 , 94.4416642421236
+    <circle cx="25" cy="50" r="2" stroke="white" stroke-width="1.2" fill="#284A88" class="sliderThumb confined" id="innerSlider"/>
+    <circle cx="78" cy="86.5" r="2" stroke="#D3D3D3" stroke-width="0.5" fill="white" class="sliderThumb confined" id="outerSlider"/>
+</svg>
+</div>
+<div class="incrementContainer">
+</div>`;
 // Globals applicable to color wheel in general
 var setTurtleColor = true; // by default we are changing the color of the turtle first --> flag that determines if we are changing turtle color or background color
 // Globals for colorwheel
@@ -11,12 +35,16 @@ let incrementBox = null;
 let colorWheelCenter = [50, 50]; // center of color wheel in the SVG viewbox
 let colorWheelZeroDegPoint = [50, 25]; // reference point for angle calculation
 let currentIncrement;
+let currentIncrementVal;
 let lastOuterWheelCor = [78, 86.5];
 let lastInnerWheelCor = [25, 50];
 let outerWheelRadius = 50 - 4.1;
 let currentOuterWheelColors;
 let innerWheelOuterRadius = 40;
 let innerWheelInnerRadius = 20;
+let currentSelectionID;
+let display = $(".display");
+let currentGlobalColor = null;
 // set up color model
 const netlogoBaseColors = [[140, 140, 140],
     [215, 48, 39],
@@ -68,6 +96,9 @@ var mappedColors = {
     'magenta': 125,
     'pink': 135,
 };
+function capitalizeFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 //Turtle editing functions
 function updateTurtleColor(b) {
     setTurtleColor = b;
@@ -263,12 +294,16 @@ function updateColor(angle, draggedElement) {
             let outerAngle = findAngle(colorWheelZeroDegPoint[0], colorWheelZeroDegPoint[1], colorWheelCenter[0], colorWheelCenter[1], lastOuterWheelCor[0], lastOuterWheelCor[1]);
             colorIndex = Math.floor((outerAngle / (360 / ((10 / currentIncrement) + 1))));
             $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
+            currentGlobalColor = currentOuterWheelColors[colorIndex];
             break;
         case "outerSlider":
             colorIndex = Math.floor((angle / (360 / ((10 / currentIncrement) + 1))));
             $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
+            currentGlobalColor = currentOuterWheelColors[colorIndex];
             break;
     }
+    $("#netlogoColorDisplay").innerHTML = capitalizeFirstLetter(currentColor);
+    $("#hexDisplay").innerHTML = currentGlobalColor;
 }
 // Seting up dragging events
 function makeDraggable(evt) {
@@ -342,8 +377,35 @@ function makeDraggable(evt) {
         selectedElement = null;
     }
 }
-// call functions
-loadWheels("#inner");
-currentOuterWheelColors = loadWheels('#outer', 1);
-setupIncrements();
-updateTurtleColor(true);
+function updateSelection(c) {
+    let id;
+    // remove previous selection
+    if (currentSelectionID != null) {
+        $(currentSelectionID).style.backgroundColor = "#E5E5E5";
+        $(currentSelectionID).style.color = "black";
+    }
+    // first -- clear the display 
+    display.innerHTML = "";
+    switch (c) {
+        case 1: //grid
+            console.log("grid");
+            id = "#g";
+            break;
+        case 2:
+            id = "#w";
+            display.innerHTML = wheelHTML;
+            loadWheels("#inner");
+            currentOuterWheelColors = loadWheels('#outer', 1);
+            setupIncrements();
+            updateTurtleColor(true);
+            break;
+        case 3:
+            console.log("slider");
+            id = "#s";
+            break;
+    }
+    $(id).style.backgroundColor = "#5A648D";
+    $(id).style.color = "white";
+    currentSelectionID = id;
+}
+updateSelection(2);

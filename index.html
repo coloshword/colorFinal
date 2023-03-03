@@ -14,9 +14,9 @@
         </div>
         <div class="selection">
             <div class="selectionOptions">
-                <div class="selectionMode" id="g">Grid</div>
-                <div class="selectionMode" id="w">Wheel</div>
-                <div class="selectionMode" id="s">Slider</div>
+                <div class="selectionMode" onclick="updateSelection(1)" id="g">Grid</div>
+                <div class="selectionMode" onclick="updateSelection(2)" id="w">Wheel</div>
+                <div class="selectionMode" onclick="updateSelection(3)" id="s">Slider</div>
             </div>
             <div class="modelBackgroundIndicator">
                 <div class="selectionMode modelIndicator" onclick="updateTurtleColor(!setTurtleColor)" >Model Color Selected</div>
@@ -25,36 +25,17 @@
         <!-- The actual colorWheel Part-->
         <div class="parameters"> <!--The stuff below the selection mode-->
             <div class="display">
-                <div class="colorWheel">
-                    <svg viewBox="0 0 100 100" width = "300" height = "300" onload="makeDraggable(evt)">
-                        <!--SVG for outerslider -->
-                        <clipPath id="clipOuter">
-                            <path d="M 50 2 a 48 48 0 0 1 0 96 48 48 0 0 1 0 -96 v 4 a 44 44 0 0 0 0 88 44 44 0 0 0 0 -88"/>
-                        </clipPath>
-                        <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clipOuter)">
-                            <div id="outer"></div>
-                        </foreignObject>
-                        <!--SVG for inner slider-->
-                        <clipPath id="clip">
-                            <path d="M 50 10 A 40 40 0 1 0 50 90 A 40 40 0 1 0 50 10 Z M 50 30 A 20 20 0 1 1 50 70 A 20 20 0 1 1 50 30 Z" />
-                        </clipPath>
-    
-                        <foreignObject x="0" y="0" width="100" height="100" clip-path="url(#clip)">
-                            <div id="inner"></div>
-                        </foreignObject>
-                        <!-- the two slider thumbs-->57.999999135732665 , 94.4416642421236
-                        <circle cx="25" cy="50" r="2" stroke="white" stroke-width="1.2" fill="#284A88" class="sliderThumb confined" id="innerSlider"/>
-                        <circle cx="78" cy="86.5" r="2" stroke="#D3D3D3" stroke-width="0.5" fill="white" class="sliderThumb confined" id="outerSlider"/>
-                    </svg>
-                </div>
-                <div class="incrementContainer">
-                </div>
             </div>
             <div class="turtleResultDisplay">
                 <svg viewBox="0 0 100 100" width = "100%" height="14.4em">
                     <rect x="0" y="0" width="100%" height="100%" fill="#52C4C4" rx="3" id="background" onclick="updateTurtleColor(false)"></rect>
                     <path xmlns="http://www.w3.org/2000/svg" onclick="updateTurtleColor(true)"id="turtle" fill="#284A88" d="M 50.069 9.889 L 14.945 89.069 L 50.71 65.458 L 86.458 89.73 L 50.069 9.889 Z"/>
                 </svg>
+                <div class="colorParameters">
+                    <div class="parameterText">Color Parameters</div>
+                    <div class="valDisplay" id="hexDisplay">#284A88</div>
+                    <div class="valDisplay" id="netlogoColorDisplay">Blue + 5</div>
+                </div>
             </div>
         </div>
     </div>
