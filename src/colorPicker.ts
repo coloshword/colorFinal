@@ -37,13 +37,14 @@ let incrementBox: HTMLElement = null;
 let colorWheelCenter = [50, 50] // center of color wheel in the SVG viewbox
 let colorWheelZeroDegPoint = [50, 25] // reference point for angle calculation
 let currentIncrement;
-let currentIncrementVal;
+let currentIncrementVal = 0;
 let lastOuterWheelCor = [78, 86.5];
 let lastInnerWheelCor = [25, 50];
 let outerWheelRadius = 50 - 4.1;
 let currentOuterWheelColors: string[];
 let innerWheelOuterRadius = 40;
 let innerWheelInnerRadius = 20;
+let currentOuterWheelIndex = 0; 
 let currentSelectionID;
 let display = $(".display");
 let currentGlobalColor = null;
@@ -318,17 +319,34 @@ function updateColor(angle:number, draggedElement: SVGSVGElement): void {
       colorIndex = Math.floor((outerAngle / (360 / ((10 / currentIncrement) + 1))));
       $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
       currentGlobalColor = currentOuterWheelColors[colorIndex];
+      currentOuterWheelIndex = colorIndex;
       break;
     case "outerSlider":
       colorIndex = Math.floor((angle / (360 / ((10 / currentIncrement) + 1))));
+      currentOuterWheelIndex = colorIndex;
       $(toChangeId).style.fill = currentOuterWheelColors[colorIndex];
       currentGlobalColor = currentOuterWheelColors[colorIndex];
       break;
   }
-  $("#netlogoColorDisplay").innerHTML = capitalizeFirstLetter(currentColor);
+  // update currentIncrementVal with information from currentOuterOuterwheelIndex and currentColor
+  let displaySign = '+';
+  let displayNum = Math.round((currentOuterWheelIndex / (1 / currentIncrement) - 5) * 100) / 100;
+  if(displayNum == 5) {
+    displayNum = 4.9;
+  }
+  else if (displayNum < 0){
+    displaySign = '-';
+  }
+  let nColorNumber = mappedColors[currentColor] + displayNum;
+  console.log(nColorNumber);
+  $("#nlogoBox").innerHTML = "" + nColorNumber;
+  $("#netlogoColorDisplay").innerHTML = capitalizeFirstLetter(currentColor) + ` ${displaySign} `  + Math.abs(displayNum);
   $("#hexDisplay").innerHTML = currentGlobalColor;
 }
 
+function copyVal() {
+  navigator.clipboard.writeText(currentGlobalColor);
+}
 // Seting up dragging events
 function makeDraggable(evt: MouseEvent): void {
   let svg_viewbox = evt.target as SVGSVGElement;

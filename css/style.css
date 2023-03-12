@@ -198,3 +198,25 @@ body {
     text-align: center;
     padding-top: 0.5rem;
 }
+
+.displayBox {
+    display: flex;
+    flex-direction: row;
+    gap: 0.5rem;
+}
+
+.netlogoColorBox{ 
+    text-align: center;
+    padding-top: 0.5rem;
+    height:1.7rem;
+    width: 3rem;
+    border-radius: 0.3rem;
+    background-color: #CECECE;
+}
+
+#copyButton {
+    cursor:pointer;
+
+}
+
+
